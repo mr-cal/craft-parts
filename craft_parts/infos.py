@@ -199,6 +199,7 @@ class ProjectInfo:
         :raise RuntimeError: If a write-once variable is set a second time, or if a
             part name is specified and the variable is set from a different part.
         """
+        logger.debug(f"set_project_var: {name=}, {value=}, {raw_write=}, {part_name=}")
         self._ensure_valid_variable_name(name)
 
         if raw_write:
@@ -367,6 +368,7 @@ class PartInfo:
         :raise RuntimeError: If a write-once variable is set a second time, or if a
             part name is specified and the variable is set from a different part.
         """
+        logger.debug(f"part_info:set_project_var: {name=}, {value=}, {raw_write=}")
         self._project_info.set_project_var(
             name, value, part_name=self._part_name, raw_write=raw_write
         )
