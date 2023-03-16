@@ -107,6 +107,7 @@ class AptCache(ContextDecorator):
     @classmethod
     def configure_apt(cls, application_package_name: str) -> None:
         """Set up apt options and directories."""
+        raise Exception(f"about to configure apt for {application_package_name=}")
         # Do not install recommends.
         apt_pkg.config.set("Apt::Install-Recommends", "False")
 

@@ -112,6 +112,7 @@ class LifecycleManager:
         if "parts" not in all_parts:
             raise ValueError("parts definition is missing")
 
+        raise Exception(f"about to configure the repository for {application_package_name=}")
         packages.Repository.configure(application_package_name)
 
         project_dirs = ProjectDirs(work_dir=work_dir)
