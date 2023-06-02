@@ -74,6 +74,7 @@ class LifecycleManager:
     :param project_vars_part_name: Project variables can only be set in the part
         matching this name.
     :param project_vars: A dictionary containing project variables.
+    :param partitions: TODO
     :param custom_args: Any additional arguments that will be passed directly
         to :ref:`callbacks<callbacks>`.
     """
@@ -99,6 +100,7 @@ class LifecycleManager:
         base_layer_hash: Optional[bytes] = None,
         project_vars_part_name: Optional[str] = None,
         project_vars: Optional[Dict[str, str]] = None,
+        partitions: Optional[List[str]] = None,
         **custom_args: Any,  # custom passthrough args
     ):
         # pylint: disable=too-many-locals
@@ -115,6 +117,7 @@ class LifecycleManager:
         if "parts" not in all_parts:
             raise ValueError("parts definition is missing")
 
+        _validate_partitions(partitions)
         packages.Repository.configure(application_package_name)
 
         project_dirs = ProjectDirs(work_dir=work_dir)
@@ -130,6 +133,7 @@ class LifecycleManager:
             project_dirs=project_dirs,
             project_vars_part_name=project_vars_part_name,
             project_vars=project_vars,
+            partitions=partitions,
             **custom_args,
         )
 
@@ -139,9 +143,13 @@ class LifecycleManager:
 
         part_list = []
         for name, spec in parts_data.items():
-            part_list.append(_build_part(name, spec, project_dirs, strict_mode))
+            part_list.append(
+                _build_part(name, spec, project_dirs, strict_mode)
+            )
 
         self._has_overlay = any(p.has_overlay for p in part_list)
+
+        _validate_partition_usage_in_parts(part_list, partitions)
 
         # a base layer is mandatory if overlays are in use
         if self._has_overlay:
@@ -324,3 +332,68 @@ def _build_part(
     )
 
     return part
+
+
+def _validate_partition_usage_in_parts(part_list, partitions):
+    # skip validation if partitions are not enabled
+    if not Features().enable_partitions:
+        return
+
+    for part in part_list:
+        for filepaths in [
+            part.spec.organize_files,
+            part.spec.overlay_files,
+            part.spec.prime_files,
+            part.spec.stage_files,
+        ]:
+            _validate_partitions_in_keywords(filepaths, partitions)
+
+
+def _validate_partitions_in_keywords(
+        filepaths: List[str], partitions: List[str]
+) -> None:
+    """Get a filepath compatible with the partitions feature."""
+    # do not validate default glob
+    if filepaths == ["*"]:
+        return
+
+    for filepath in filepaths:
+        match = re.match("-?\\((?P<partition>[a-z]+)\\)", filepath)
+        if match:
+            partition = match.group("partition")
+            if partition not in partitions:
+                raise Exception(f"filepath {filepath} is using an unknown partition")
+        match = re.match("-?(?P<possible_partition>[a-z]+)/?", filepath)
+        if match:
+            partition = match.group("possible_partition")
+            if partition in partitions:
+                raise Exception(
+                    f"Warning: A filepath {filepath} starts with a valid partition "
+                    f"{partition} but is not wrapped in parentheses."
+                )
+
+
+def _validate_partitions(partitions: Optional[List[str]]) -> None:
+    """Validate partitions data.
+
+    If partitions are defined, the first partition must be "default" and each partition
+     must contain only lowercase letters.
+
+    :param partitions: Partition data to verify.
+
+    :raises ValueError: If the partitions are not valid.
+    """
+    if partitions:
+        if not Features().enable_partitions:
+            raise errors.FeatureDisabled("Partition feature is not enabled.")
+
+        # TODO: check for empty list?
+
+        if partitions[0] != "default":
+            raise ValueError("First partition must be 'default'.")
+
+        for partition in partitions:
+            if not re.fullmatch("[a-z]+", partition):
+                raise ValueError(
+                    f"Partition {partition} must only contain lowercase letters."
+                )

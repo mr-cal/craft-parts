@@ -30,6 +30,7 @@ class Features(metaclass=Singleton):
     """Configurable craft-parts features."""
 
     enable_overlay: bool = False
+    enable_partitions: bool = False
 
     @classmethod
     def reset(cls) -> None:
