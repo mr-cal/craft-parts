@@ -49,16 +49,17 @@ def organize_files(
         are organized to the same destination.
     """
     for key in sorted(mapping, key=lambda x: ["*" in x, x]):
-        src = os.path.join(base_dir, path_utils.get_partitioned_path(key))
+        _, src_inner_path = path_utils.get_partition_and_path(key)
+        src = os.path.join(base_dir, src_inner_path)
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
         partition, inner_path = path_utils.get_partition_and_path(
             mapping[key].lstrip("/")
         )
-        if partition:
-            dst = os.path.join(base_dir, partition, inner_path)
-            partition_path = os.path.join(f"({partition})", inner_path)
+        if partition and partition != "default":
+            dst = os.path.join("partitions", partition, "parts", part_name, "install", inner_path)
+            partition_path = dst
         else:
             dst = os.path.join(base_dir, inner_path)
             partition_path = str(inner_path)

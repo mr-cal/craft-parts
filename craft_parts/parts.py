@@ -18,7 +18,7 @@
 
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, cast
 
 from pydantic import BaseModel, Field, ValidationError, root_validator, validator
 
@@ -279,15 +279,8 @@ class Part:
 
     @property
     def part_install_dir(self) -> Path:
-        """Return the subdirectory to install the part build artifacts.
-
-        With partitions disabled, this is the install directory and is the same
-        as ``part_base_install_dir``
-        With partitions enabled, this is the install directory for the default partition
-        """
-        if self._partitions is None:
-            return self.part_base_install_dir
-        return self.part_base_install_dir / "default"
+        """Return the subdirectory to install the part build artifacts."""
+        return self.part_base_install_dir
 
     @property
     def part_install_dirs(self) -> Mapping[Optional[str], Path]:
@@ -297,10 +290,16 @@ class Part:
         """
         if self._partitions is None:
             return {None: self.part_base_install_dir}
-        return {
-            partition: self.part_base_install_dir / partition
-            for partition in self._partitions
-        }
+
+        partitions: Dict[str, Path] = {}
+
+        for partition in self._partitions:
+            if partition == "default":
+                partitions["default"] = self.part_base_install_dir
+            else:
+                partitions[partition] = Path(f"partitions/{partition}/parts/{self.name}/install")
+
+        return cast(Mapping[str, Path], partitions)
 
     @property
     def part_state_dir(self) -> Path:

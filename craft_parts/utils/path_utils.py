@@ -46,31 +46,6 @@ def _has_partition(path: Union[PurePath, str]) -> bool:
     )
 
 
-def get_partitioned_path(path: FlexiblePath) -> FlexiblePath:
-    """Get a filepath compatible with the partitions feature.
-
-    If the filepath begins with a partition, then the parentheses are stripped from the
-    the partition. For example, `(default)/file` is converted to `default/file`.
-
-    If the filepath does not begin with a partition, the `default` partition is
-    prepended. For example, `file` is converted to `default/file`.
-
-    :param path: The filepath to modify.
-
-    :returns: A filepath that is compatible with the partitions feature.
-    """
-    if not Features().enable_partitions:
-        return path
-
-    if str(path) == "*":
-        return path
-
-    partition, inner_path = get_partition_and_path(path)
-
-    new_filepath = PurePosixPath(partition or ".", str(inner_path))
-    return path.__class__(new_filepath)
-
-
 def get_partition_and_path(path: FlexiblePath) -> PartitionPathPair:
     """Break a partition path into the partition and the child path.
 

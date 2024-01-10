@@ -157,11 +157,6 @@ class StepHandler:
         return StepContents()
 
     def _builtin_stage(self) -> StepContents:
-        stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
-        files, dirs = filesets.migratable_filesets(
-            stage_fileset, str(self._part.part_base_install_dir)
-        )
-
         def pkgconfig_fixup(file_path: str) -> None:
             if os.path.islink(file_path):
                 return
@@ -173,13 +168,42 @@ class StepHandler:
                 prefix_trim=self._part.part_base_install_dir,
             )
 
-        files, dirs = migrate_files(
-            files=files,
-            dirs=dirs,
-            srcdir=self._part.part_base_install_dir,
-            destdir=self._part.base_stage_dir,
-            fixup_func=pkgconfig_fixup,
-        )
+        stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
+
+        if self._part._partitions:
+            files: set[str] = set()
+            dirs: set[str] = set()
+            for partition in self._part._partitions:
+                partition_files, partition_dirs = filesets.migratable_filesets(
+                    stage_fileset, str(self._part.part_install_dirs[partition]), partition
+                )
+
+                destdir = self._part.dirs.get_stage_dir(partition)
+
+                partition_files, partition_dirs = migrate_files(
+                    files=partition_files,
+                    dirs=partition_dirs,
+                    srcdir=self._part.part_install_dirs[partition],
+                    destdir=destdir,
+                    fixup_func=pkgconfig_fixup,
+                )
+
+                files.update(partition_files)
+                dirs.update(partition_dirs)
+
+        else:
+            files, dirs = filesets.migratable_filesets(
+                stage_fileset, str(self._part.part_base_install_dir)
+            )
+
+            files, dirs = migrate_files(
+                files=files,
+                dirs=dirs,
+                srcdir=self._part.part_base_install_dir,
+                destdir=self._part.base_stage_dir,
+                fixup_func=pkgconfig_fixup,
+            )
+
         return StepContents(files, dirs)
 
     def _builtin_prime(self) -> StepContents:
@@ -191,16 +215,39 @@ class StepHandler:
             stage_fileset = Fileset(self._part.spec.stage_files, name="stage")
             prime_fileset.combine(stage_fileset)
 
-        files, dirs = filesets.migratable_filesets(
-            prime_fileset, str(self._part.part_base_install_dir)
-        )
-        files, dirs = migrate_files(
-            files=files,
-            dirs=dirs,
-            srcdir=self._part.base_stage_dir,
-            destdir=self._part.base_prime_dir,
-            permissions=self._part.spec.permissions,
-        )
+        if self._part._partitions:
+            files: set[str] = set()
+            dirs: set[str] = set()
+            for partition in self._part._partitions:
+                partition_files, partition_dirs = filesets.migratable_filesets(
+                    prime_fileset, str(self._part.part_install_dirs[partition]), partition
+                )
+
+                srcdir = self._part.dirs.get_stage_dir(partition)
+                destdir = self._part.dirs.get_prime_dir(partition)
+
+                partition_files, partition_dirs = migrate_files(
+                    files=partition_files,
+                    dirs=partition_dirs,
+                    srcdir=srcdir,
+                    destdir=destdir,
+                    permissions=self._part.spec.permissions,
+                )
+
+                files.update(partition_files)
+                dirs.update(partition_dirs)
+
+        else:
+            files, dirs = filesets.migratable_filesets(
+                prime_fileset, str(self._part.part_base_install_dir)
+            )
+            files, dirs = migrate_files(
+                files=files,
+                dirs=dirs,
+                srcdir=self._part.base_stage_dir,
+                destdir=self._part.base_prime_dir,
+                permissions=self._part.spec.permissions,
+            )
 
         return StepContents(files, dirs)
 

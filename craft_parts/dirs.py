@@ -60,12 +60,21 @@ class ProjectDirs:
             self._partitions: Sequence[Optional[str]] = partitions
             self.stage_dir = self.base_stage_dir / "default"
             self.prime_dir = self.base_prime_dir / "default"
-            stage_dirs: Dict[Optional[str], Path] = {
-                part: self.base_stage_dir / part for part in partitions
-            }
-            prime_dirs: Dict[Optional[str], Path] = {
-                part: self.base_prime_dir / part for part in partitions
-            }
+
+            stage_dirs: Dict[Optional[str], Path] = {}
+            for partition in partitions:
+                if partition == "default":
+                    stage_dirs["default"] = self.base_stage_dir
+                else:
+                    stage_dirs[partition] = self.work_dir / "partitions" / partition / "stage"
+
+            prime_dirs: Dict[Optional[str], Path] = {}
+            for partition in partitions:
+                if partition == "default":
+                    prime_dirs["default"] = self.base_prime_dir
+                else:
+                    prime_dirs[partition] = self.work_dir / "partitions" / partition / "prime"
+
         else:
             self._partitions = [None]
             self.stage_dir = self.base_stage_dir

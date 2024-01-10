@@ -43,7 +43,7 @@ def check_for_stage_collisions(part_list: List[Part]) -> None:
         stage_fileset = Fileset(stage_files, name="stage")
         srcdir = str(part.part_install_dir)
         part_files, part_directories = filesets.migratable_filesets(
-            stage_fileset, srcdir
+            stage_fileset, srcdir, "default"
         )
         part_contents = part_files | part_directories
 
