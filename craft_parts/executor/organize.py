@@ -83,6 +83,7 @@ def organize_files(
 
         if dst_partition and dst_partition != "default":
             dst = os.path.join(
+                base_dir,
                 "partitions",
                 dst_partition,
                 "parts",
