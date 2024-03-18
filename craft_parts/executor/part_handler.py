@@ -886,6 +886,7 @@ class PartHandler:
             mapping=mapping,
             base_dir=self._part.part_install_dir,
             overwrite=overwrite,
+            install_dirs=self._part.part_install_dirs,
         )
 
     def _fetch_stage_packages(self, *, step_info: StepInfo) -> Optional[List[str]]:

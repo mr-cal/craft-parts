@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 def organize_files(
-    *, part_name: str, mapping: Dict[str, str], base_dir: Path, overwrite: bool
+    *, part_name: str, mapping: Dict[str, str], base_dir: Path, overwrite: bool, install_dirs: Dict[str, Path],
 ) -> None:
     """Rearrange files for part staging.
 
@@ -81,20 +81,20 @@ def organize_files(
         )
         logger.debug(f"{dst_partition=}, {dst_inner_path=}")
 
-        if dst_partition and dst_partition != "default":
-            dst = os.path.join(
-                base_dir,
-                "partitions",
-                dst_partition,
-                "parts",
-                part_name,
-                "install",
-                dst_inner_path,
-            )
-            partition_path = dst
-        else:
-            dst = os.path.join(base_dir, dst_inner_path)
-            partition_path = str(dst_inner_path)
+        dst = partition_path = install_dirs[dst_partition] / dst_inner_path
+        #if dst_partition and dst_partition != "default":
+        #    dst = os.path.join(
+        #        "partitions",
+        #        dst_partition,
+        #        "parts",
+        #        part_name,
+        #        "install",
+        #        dst_inner_path,
+        #    )
+        #    partition_path = dst
+        #else:
+        #    dst = os.path.join(base_dir, dst_inner_path)
+        #    partition_path = str(dst_inner_path)
 
         logger.debug(f"{dst=}, {partition_path=}")
 
