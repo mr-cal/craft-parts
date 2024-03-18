@@ -877,6 +877,10 @@ class PartHandler:
 
     def _organize(self, *, overwrite: bool = False) -> None:
         mapping = self._part.spec.organize_files
+        logger.debug("XXXXXXXXXXXXXXXx")
+        logger.debug(
+            f"Organizing files: {self._part.name=}, {mapping=}, {self._part.part_install_dir=}, {self._part.part_install_dirs}"
+        )
         organize_files(
             part_name=self._part.name,
             mapping=mapping,

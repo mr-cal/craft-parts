@@ -23,6 +23,7 @@ represents how the file is going to be staged.
 """
 
 import contextlib
+import logging
 import os
 import shutil
 from glob import iglob
@@ -31,6 +32,9 @@ from typing import Dict
 
 from craft_parts import errors
 from craft_parts.utils import file_utils, path_utils
+
+
+logger = logging.getLogger(__name__)
 
 
 def organize_files(
@@ -52,8 +56,11 @@ def organize_files(
     :raises FileOrganizeError: If partitions are enabled and the source file is not from
         the default partition.
     """
+    logger.debug("YYYYYYYYYYYYYYY")
+    logger.debug(f"Organizing files for part {part_name!r}")
     for key in sorted(mapping, key=lambda x: ["*" in x, x]):
         src_partition, src_inner_path = path_utils.get_partition_and_path(key)
+        logger.debug(f"{src_partition=}, {src_inner_path=}")
 
         if src_partition and src_partition != "default":
             raise errors.FileOrganizeError(
@@ -65,12 +72,14 @@ def organize_files(
             )
 
         src = os.path.join(base_dir, src_inner_path)
+        logger.debug(f"{src=}")
 
         # Remove the leading slash so the path actually joins
         # Also trailing slash is significant, be careful if using pathlib!
         dst_partition, dst_inner_path = path_utils.get_partition_and_path(
             mapping[key].lstrip("/")
         )
+        logger.debug(f"{dst_partition=}, {dst_inner_path=}")
 
         if dst_partition and dst_partition != "default":
             dst = os.path.join(
@@ -85,6 +94,8 @@ def organize_files(
         else:
             dst = os.path.join(base_dir, dst_inner_path)
             partition_path = str(dst_inner_path)
+
+        logger.debug(f"{dst=}, {partition_path=}")
 
         sources = iglob(src, recursive=True)
 
