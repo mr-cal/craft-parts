@@ -145,6 +145,8 @@ class LifecycleManager:
 
         parts_data = all_parts.get("parts", {})
 
+        print("YYYYYYYYYYYYYY")
+        print(f"{project_info.project_name}")
         executor.expand_environment(parts_data, info=project_info)
 
         part_list = []
